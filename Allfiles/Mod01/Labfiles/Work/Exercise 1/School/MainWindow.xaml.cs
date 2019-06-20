@@ -59,26 +59,50 @@ namespace School
         private void studentsList_KeyDown( object sender, KeyEventArgs e )
         {
             Student student = new Student();
-            
+
             switch (e.Key)
             {
                 case Key.Enter:
                     student = this.studentsList.SelectedItem as Student;
-                    StudentForm sf = new StudentForm();
-                    sf.Title = "Edit Student Details";
-                    sf.firstName.Text = student.FirstName;
-                    sf.lastName.Text = student.LastName;
-                    sf.dateOfBirth.Text = student.DateOfBirth.ToString("d");
-                    bool? pressedOk = sf.ShowDialog();
+                    StudentForm editForm = new StudentForm();
+                    editForm.Title = "Edit Student Details";
+                    editForm.firstName.Text = student.FirstName;
+                    editForm.lastName.Text = student.LastName;
+                    editForm.dateOfBirth.Text = student.DateOfBirth.ToString("d");
+                    bool? pressedOk = editForm.ShowDialog();
                     if (pressedOk == true)
                     {
-                        student.FirstName = sf.firstName.Text;
-                        student.LastName = sf.lastName.Text;
-                        student.DateOfBirth = DateTime.Parse(sf.dateOfBirth.Text);
+                        student.FirstName = editForm.firstName.Text;
+                        student.LastName = editForm.lastName.Text;
+                        student.DateOfBirth = DateTime.Parse(editForm.dateOfBirth.Text);
                         this.saveChanges.IsEnabled = true;
-                    };
-
-
+                    }
+                    break;
+                case Key.Insert:
+                    StudentForm inputForm = new StudentForm();
+                    inputForm.Title = "New Student for class " + teacher.Class;
+                    if (inputForm.ShowDialog() == true)
+                    {
+                        student.FirstName = inputForm.firstName.Text;
+                        student.LastName = inputForm.lastName.Text;
+                        student.DateOfBirth = DateTime.Parse(inputForm.dateOfBirth.Text);
+                        this.teacher.Students.Add(student);
+                        studentsInfo.Add(student);
+                        this.saveChanges.IsEnabled = true;
+                    }
+                    break;
+                case Key.Delete:
+                    student = this.studentsList.SelectedItem as Student;
+                    MessageBoxResult response = MessageBox.Show(
+                                     string.Format("Remove {0}", student.FirstName + " " + student.LastName),
+                                     "Confirm",
+                                     MessageBoxButton.YesNo,
+                                     MessageBoxImage.Question,
+                                     MessageBoxResult.No);
+                    if (response == MessageBoxResult.Yes)
+                    {
+                        this.schoolContext.Students.DeleteObject(student);
+                    }
                     break;
                 default:
                     break;
@@ -114,7 +138,16 @@ namespace School
         public object Convert( object value, Type targetType, object parameter,
                               System.Globalization.CultureInfo culture )
         {
-            return "";
+            if (value == null)
+            {
+                return "";
+            }
+            else
+            {
+                value = DateTime.Parse(value.ToString());
+                TimeSpan difference = DateTime.Now.Subtract((DateTime)value);
+                return ((int)(difference.Days / 365.25)).ToString();
+            }
         }
 
         #region Predefined code
